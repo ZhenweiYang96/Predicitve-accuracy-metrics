@@ -4,7 +4,7 @@
 
 **Affiliation**: Department of Biostatistics, Erasmus Medical Center
 
-**DOI**: 10.48550/ARXIV.2209.00105
+**DOI**: [under review]
 
 ****
 
@@ -113,4 +113,4 @@
 
 - The corresponding poster presented in ISCB 2024:
 
-![](https://github.com/ZhenweiYang96/ICJM_Precision_Medicine/blob/main/img/Schedule_1.5.png)
+![](https://github.com/ZhenweiYang96/Predicitve-accuracy-metrics/blob/main/img/2024_ISCB_Poster.png)
