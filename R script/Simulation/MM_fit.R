@@ -27,7 +27,7 @@ plan(multisession, workers = 15)
 out <- lapply(c(1:200), function(datanum) {
   future({
     #Real simulation/True sens 75/
-    load(paste0("R script/Simulation/Datasets/traindata_",
+    load(paste0("Data/Simulation Datasets/traindata_",
                 datanum, ".RData"))
     
     # train.data <- train.data[train.data$CISNET_ID %in% 1:100,]
@@ -36,7 +36,7 @@ out <- lapply(c(1:200), function(datanum) {
     # start modelling
     mm <- mm_fit(data = train.data)
     save(mm,
-         file = paste0("R script/Simulation/Fitted mixed model/MM_",
+         file = paste0("Output/Simulation Models/Fitted mixed model/MM_",
                        datanum, ".RData"))
     #
     plan(multisession, workers = 15)
@@ -48,14 +48,14 @@ res <- lapply(out, future::value)
 
 # Extract inits from the mixed models -------------------------------------
 for (datanum in 1:200) {
-  load(paste0("R script/Simulation/Fitted mixed model/MM_",
+  load(paste0("Output/Simulation Models/Fitted mixed model/MM_",
               datanum, ".RData"))
   mm_inits <- list(betaL = fixef(mm),
                    b = ranef(mm),
                    inv_D = solve(mm$D),
                    tau = 1/exp(mm$phis)^2)
   save(mm_inits,
-       file = paste0("R script/Simulation/Fitted mixed model/MM_inits_",
+       file = paste0("Output/Simulation Models/Fitted mixed model/MM_inits_",
                      datanum, ".RData"))
 }
 

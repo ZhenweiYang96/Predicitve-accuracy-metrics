@@ -57,10 +57,12 @@ td_eval <- function(model, data,
   data.id$t <- t
   data.id$tdt <- t + dt
   n <- nrow(data.id)
-  case_group <- control_group <- 
+  group <- 
     w_case_model <- w_control_model <- 
     w_case_ipcw <- w_control_ipcw <- 
-    risk_tdt <- rep(NA, n)
+    risk_tdt <- risk_t <- 
+    risk_left <- risk_right <- 
+    osurv_left <- osurv_right <- rep(NA, n)
   
   # preparation for EPCE
   Qpoints <- matrix(NA, n, qp)
@@ -108,13 +110,27 @@ td_eval <- function(model, data,
     future({
       library(rjags)
       ind_data <- data[data[[idVar]] == id_idx[i] & data[[longitime]] <= t,] # & data[[idVar]] here to see if we use only the biomarker until a specific point or the whole 
-      if (!(data.id[[e1tVar]][i] <= t+dt  & data.id[[e2tVar]][i] >= t)) {
-        visit_vec <- c(t, t+dt, Tmax)
+      if (!(data.id[[e1tVar]][i] <= t+dt & data.id[[e2tVar]][i] >= t)) {
+        if (Tmax < data.id[[e1tVar]][i]) {
+          visit_vec <- c(t, t+dt, Tmax)
+        } else {
+          if (Tmax < data.id[[e2tVar]][i]) {
+            visit_vec <- c(t, t+dt, 
+                           ifelse(data.id[[e1tVar]][i] == 0, 1e-5, data.id[[e1tVar]][i]), 
+                           Tmax)
+          } else {
+            visit_vec <- c(t, t+dt, 
+                           ifelse(data.id[[e1tVar]][i] == 0, 1e-5, data.id[[e1tVar]][i]), 
+                           data.id[[e2tVar]][i], 
+                           Tmax)
+          }
+        }
       } else {
         visit_vec <- c(t, t+dt, 
                        ifelse(data.id[[e1tVar]][i] == 0, 1e-5, data.id[[e1tVar]][i]), 
                        data.id[[e2tVar]][i], 
-                       Qpoints[i,], Tmax)
+                       Qpoints[i,], 
+                       Tmax)
       }
       csdypred(model = model, t_start = 1e-6, 
                t_visits = visit_vec, 
@@ -123,112 +139,162 @@ td_eval <- function(model, data,
     })
   })
   res <- lapply(out, future::value)
+  if (!is.null(savepath)) {
+    save(res, file=savepath)
+  }
   
+  longlivesub <- NULL
   for (i in 1:n) {
     
     #### Weights for Time-dependent AUC and Brier score
+    # shorten the conditions
+    time.right <- data.id[[e2tVar]][i]
+    # special case for left time point == 0, let it to be 1e-5
+    time.left <- ifelse(data.id[[e1tVar]][i] == 0, 1e-5, data.id[[e1tVar]][i])
+    event.ind <- data.id[[eidVar]][i]
+    
     pred <- res[[i]]
     est_risk <- pred$risk_visits
     over_surv <- pred$overall.surv.summary
     risk_tdt[i] <- est_risk[est_risk$t.hor == t+dt, "mean"]
-    # special case for left time point == 0, let it to be 1e-5
-    time.left <- ifelse(data.id[[e1tVar]][i] == 0, 1e-5, data.id[[e1tVar]][i])
-    if (data.id[[e1tVar]][i] <= t+dt) {
-      LFTCRT_RISK <- est_risk[est_risk$t.hor == time.left, "mean"]
-      LFTCRT_SURV <- over_surv[over_surv$t.hor == time.left, "mean"]
+    risk_t[i] <- est_risk[est_risk$t.hor == t, "mean"]
+    # here we do last observation carried forward for the censored patients (usually) have right time after the longest follow-up in the training data
+    if (time.right > Tmax) {
+      if (time.left > Tmax) {
+        risk_right[i] <- est_risk[est_risk$t.hor == Tmax, "mean"]+ 1e-5
+        osurv_right[i] <- over_surv[over_surv$t.hor == Tmax, "mean"]+ 1e-5
+        
+        risk_left[i] <- LFTCRT_RISK <- est_risk[est_risk$t.hor == Tmax, "mean"]
+        osurv_left[i] <- LFTCRT_SURV <- over_surv[over_surv$t.hor == Tmax, "mean"]
+        longlivesub <- c(longlivesub, i)
+      } else {
+        risk_right[i] <- est_risk[est_risk$t.hor == Tmax, "mean"]
+        osurv_right[i] <- over_surv[over_surv$t.hor == Tmax, "mean"]
+        
+        risk_left[i] <- LFTCRT_RISK <- est_risk[est_risk$t.hor == time.left, "mean"]
+        osurv_left[i] <- LFTCRT_SURV <- over_surv[over_surv$t.hor == time.left, "mean"]
+      }
+    } else {
+      risk_right[i] <- est_risk[est_risk$t.hor == data.id[[e2tVar]][i], "mean"]
+      osurv_right[i] <- over_surv[over_surv$t.hor == data.id[[e2tVar]][i], "mean"]
+      
+      risk_left[i] <- LFTCRT_RISK <- est_risk[est_risk$t.hor == time.left, "mean"]
+      osurv_left[i] <- LFTCRT_SURV <- over_surv[over_surv$t.hor == time.left, "mean"]
     }
     
-    if (data.id[[e2tVar]][i] <= t) {
-      case_group[i] <- 0
+    if (time.right <= t) { # grayed
+      group[i] <- "0"
       w_case_model[i] <- 0
       w_case_ipcw[i] <- 0
       
-      control_group[i] <- 0
       w_control_model[i] <- 0
       w_control_ipcw[i] <- 0
-    } else if (data.id[[e1tVar]][i] <= t & data.id[[e2tVar]][i] >= t & data.id[[e2tVar]][i] <= t+dt & data.id[[eidVar]][i] == 0) {
-      case_group[i] <- 1
-      w_case_model[i] <- (est_risk[est_risk$t.hor == t+dt, "mean"] - est_risk[est_risk$t.hor == t, "mean"])/LFTCRT_SURV
+    } else if (time.left <= t & time.right >= t & time.right <= t+dt & event.ind == 1) { # 1a
+      group[i] <- "1a"
+      w_case_model[i] <- (risk_right[i] - risk_t[i])/
+        (risk_right[i] - LFTCRT_RISK)
       w_case_ipcw[i] <- 0
       
-      control_group[i] <- 1
-      w_control_model[i] <- est_risk[est_risk$t.hor == Inf, "mean"] - 
-        (est_risk[est_risk$t.hor == t+dt, "mean"] - LFTCRT_RISK)/LFTCRT_SURV
-      w_control_ipcw[i] <- 0
-    } else if (data.id[[e1tVar]][i] <= t & data.id[[e2tVar]][i] >= t & data.id[[e2tVar]][i] <= t+dt & data.id[[eidVar]][i] != 0) {
-      case_group[i] <- 2
-      w_case_model[i] <- (est_risk[est_risk$t.hor == data.id[[e2tVar]][i], "mean"] - est_risk[est_risk$t.hor == t, "mean"])/LFTCRT_SURV
-      w_case_ipcw[i] <- 0
-      
-      control_group[i] <- 0
       w_control_model[i] <- 0
       w_control_ipcw[i] <- 0
-    } else if (data.id[[e1tVar]][i] >= t & data.id[[e1tVar]][i] <= t+dt & data.id[[e2tVar]][i] >= t & data.id[[e2tVar]][i] <= t+dt & data.id[[eidVar]][i] == 0) {
-      case_group[i] <- 3
-      w_case_model[i] <- (est_risk[est_risk$t.hor == t+dt, "mean"] - LFTCRT_RISK)/LFTCRT_SURV
+    } else if (time.left <= t & time.right >= t & time.right <= t+dt & event.ind == 2) { # 1b
+      group[i] <- "1b"
+      w_case_model[i] <- (risk_right[i] - risk_t[i])/LFTCRT_SURV
       w_case_ipcw[i] <- 0
       
-      control_group[i] <- 1
-      w_control_model[i] <- est_risk[est_risk$t.hor == Inf, "mean"] - 
-        (est_risk[est_risk$t.hor == t+dt, "mean"] - LFTCRT_RISK)/LFTCRT_SURV
+      w_control_model[i] <- 0
       w_control_ipcw[i] <- 0
-    } else if (data.id[[e1tVar]][i] >= t & data.id[[e1tVar]][i] <= t+dt & data.id[[e2tVar]][i] >= t & data.id[[e2tVar]][i] <= t+dt & data.id[[eidVar]][i] == 1) {
-      case_group[i] <- 4
+    } else if (time.left <= t & time.right >= t & time.right <= t+dt & event.ind == 0) { # 1c
+      group[i] <- "1c"
+      w_case_model[i] <- (risk_tdt[i] - risk_t[i])/LFTCRT_SURV
+      w_case_ipcw[i] <- 0
+      
+      w_control_model[i] <- over_surv[over_surv$t.hor == t+dt, "mean"]/LFTCRT_SURV
+      w_control_ipcw[i] <- 0
+    } else if (time.left >= t & time.left <= t+dt & time.right >= t+dt & event.ind == 1) { # 2a
+      group[i] <- "2a"
+      w_case_model[i] <- (risk_tdt[i] - LFTCRT_RISK)/
+        (risk_right[i] - LFTCRT_RISK)
+      w_case_ipcw[i] <- 0
+      
+      w_control_model[i] <- (risk_right[i] - risk_tdt[i])/
+        (risk_right[i] - LFTCRT_RISK)
+      w_control_ipcw[i] <- 0
+    } else if (time.left >= t & time.left <= t+dt & time.right >= t+dt & event.ind == 2) { # 2b
+      group[i] <- "2b"
+      w_case_model[i] <- (risk_tdt[i] - LFTCRT_RISK)/LFTCRT_SURV
+      w_case_ipcw[i] <- 0
+      
+      w_control_model[i] <- 1 - (risk_tdt[i] - LFTCRT_RISK)/LFTCRT_SURV
+      w_control_ipcw[i] <- 0
+    } else if (time.left >= t & time.left <= t+dt & time.right >= t+dt & event.ind == 0) { # 2c
+      group[i] <- "2c"
+      w_case_model[i] <- (risk_tdt[i] - LFTCRT_RISK)/LFTCRT_SURV
+      w_case_ipcw[i] <- 0
+      
+      w_control_model[i] <- 1 - (risk_tdt[i] - LFTCRT_RISK)/LFTCRT_SURV
+      w_control_ipcw[i] <- 0
+    } else if (time.left >= t & time.left <= t+dt & time.right >= t & time.right <= t+dt & event.ind == 1) { # 3a
+      group[i] <- "3a"
       w_case_model[i] <- 1
-      est_risk_ipcw <- summary(ipcw_km, times = c(t, data.id[[e2tVar]][i]))
+      est_risk_ipcw <- summary(ipcw_km, times = c(t, time.right))
       w_case_ipcw[i] <- 1/(est_risk_ipcw$surv[2]/est_risk_ipcw$surv[1])
       
-      control_group[i] <- 0
       w_control_model[i] <- 0
       w_control_ipcw[i] <- 0
-    } else if (data.id[[e1tVar]][i] >= t & data.id[[e1tVar]][i] <= t+dt & data.id[[e2tVar]][i] >= t & data.id[[e2tVar]][i] <= t+dt & data.id[[eidVar]][i] == 2) {
-      case_group[i] <- 5
-      w_case_model[i] <- (est_risk[est_risk$t.hor == data.id[[e2tVar]][i], "mean"] - LFTCRT_RISK)/LFTCRT_SURV
+    } else if (time.left >= t & time.left <= t+dt & time.right >= t & time.right <= t+dt & event.ind == 2) { # 3b
+      group[i] <- "3b" 
+      w_case_model[i] <- (risk_right[i] - LFTCRT_RISK)/LFTCRT_SURV
       w_case_ipcw[i] <- 0
       
-      control_group[i] <- 0
       w_control_model[i] <- 0
       w_control_ipcw[i] <- 0
-    } else if (data.id[[e1tVar]][i] >= t & data.id[[e1tVar]][i] <= t+dt & data.id[[e2tVar]][i] >= t+dt) {
-      case_group[i] <- 3
-      w_case_model[i] <- (est_risk[est_risk$t.hor == t+dt, "mean"] - LFTCRT_RISK)/LFTCRT_SURV
+    } else if (time.left >= t & time.left <= t+dt & time.right >= t & time.right <= t+dt & event.ind == 0) { # 3c
+      group[i] <- "3c" 
+      w_case_model[i] <- (risk_tdt[i] - LFTCRT_RISK)/LFTCRT_SURV
       w_case_ipcw[i] <- 0
       
-      if (data.id[[eidVar]][i] == 0) {
-        control_group[i] <- 1
-        w_control_model[i] <- est_risk[est_risk$t.hor == Inf, "mean"] - 
-          (est_risk[est_risk$t.hor == t+dt, "mean"] - LFTCRT_RISK)/LFTCRT_SURV
-        w_control_ipcw[i] <- 0
-      } else {
-        control_group[i] <- 2
-        w_control_model[i] <- (est_risk[est_risk$t.hor == data.id[[e2tVar]][i], "mean"] - est_risk[est_risk$t.hor == t+dt, "mean"])/LFTCRT_SURV
-        w_control_ipcw[i] <- 0
+      w_control_model[i] <- over_surv[over_surv$t.hor == t+dt, "mean"]/LFTCRT_SURV
+      w_control_ipcw[i] <- 0
+    } else if (time.left >= t+dt) { # group 4 # last version: time.right >= t+dt
+      if (event.ind == 1) { # 4a
+        group[i] <- "4a" 
+      } else if (event.ind == 2) { # 4b
+        group[i] <- "4b" 
+      } else { # 4c
+        group[i] <- "4c" 
       }
-    } else if (data.id[[e1tVar]][i] <= t & data.id[[e2tVar]][i] >= t+dt) {
-      case_group[i] <- 1
-      w_case_model[i] <- (est_risk[est_risk$t.hor == t+dt, "mean"] - est_risk[est_risk$t.hor == t, "mean"])/LFTCRT_SURV
-      w_case_ipcw[i] <- 0
       
-      if (data.id[[eidVar]][i] == 0) {
-        control_group[i] <- 1
-        w_control_model[i] <- est_risk[est_risk$t.hor == Inf, "mean"] - 
-          (est_risk[est_risk$t.hor == t+dt, "mean"] - LFTCRT_RISK)/LFTCRT_SURV
-        w_control_ipcw[i] <- 0
-      } else {
-        control_group[i] <- 2
-        w_control_model[i] <- (est_risk[est_risk$t.hor == data.id[[e2tVar]][i], "mean"] - est_risk[est_risk$t.hor == t+dt, "mean"])/LFTCRT_SURV
-        w_control_ipcw[i] <- 0
-      }
-    } else if (data.id[[e2tVar]][i] >= t+dt) {
-      case_group[i] <- 0
       w_case_model[i] <- 0
       w_case_ipcw[i] <- 0
       
-      control_group[i] <- 3
-      w_control_model[i] <- 0
+      w_control_model[i] <- 1
       est_risk_ipcw <- summary(ipcw_km, times = c(t, t+dt))
       w_control_ipcw[i] <- 1/(est_risk_ipcw$surv[2]/est_risk_ipcw$surv[1])
-    }
+    } else if (time.left <= t & time.right >= t+dt & event.ind == 1) { # 5a
+      group[i] <- "5a"
+      w_case_model[i] <- (risk_tdt[i] - risk_t[i])/
+        (risk_right[i] - LFTCRT_RISK)
+      w_case_ipcw[i] <- 0
+      
+      w_control_model[i] <- (risk_right[i] - risk_tdt[i])/
+        (risk_right[i] - LFTCRT_RISK)
+      w_control_ipcw[i] <- 0
+    } else if (time.left <= t & time.right >= t+dt & event.ind == 2) { # 5b
+      group[i] <- "5b"
+      w_case_model[i] <- (risk_tdt[i] - risk_t[i])/LFTCRT_SURV
+      w_case_ipcw[i] <- 0
+      
+      w_control_model[i] <- 1 - (risk_tdt[i] - LFTCRT_RISK)/LFTCRT_SURV
+      w_control_ipcw[i] <- 0
+    } else if (time.left <= t & time.right >= t+dt & event.ind == 0) { # 5c
+      group[i] <- "5c"
+      w_case_model[i] <- (risk_tdt[i] -risk_t[i])/LFTCRT_SURV
+      w_case_ipcw[i] <- 0
+      
+      w_control_model[i] <- 1 - (risk_tdt[i] - LFTCRT_RISK)/LFTCRT_SURV
+      w_control_ipcw[i] <- 0
+    } 
     
     ### indicators for EPCE
     osurv_t[i] <- over_surv[over_surv$t.hor == t, "mean"]
@@ -238,25 +304,30 @@ td_eval <- function(model, data,
     osurv_tdt[i] <- over_surv[over_surv$t.hor == t+dt, "mean"]
     
     colnames(risk_qp) <- sapply(1:qp, function(x) {paste0("qprisk",x)})
-    if (data.id[[e1tVar]][i] <= t+dt  & data.id[[e2tVar]][i] >= t) {
+    if (time.left <= t+dt  & time.right >= t) {
       tilddelta1[i] <- 1
       risk_qp[i,] <- est_risk[est_risk$t.hor %in% Qpoints[i,], "mean"]
     } else {
       risk_qp[i,] <- 0
     }
-    if (data.id[[e1tVar]][i] > t+dt | data.id[[eidVar]][i] == 0) {
+    if (time.left > t+dt | event.ind == 0) {
       tilddelta2[i] <- 1
     }
     
   }
   
-  data.id$case_group <- case_group
-  data.id$control_group <- control_group
+  data.id$group <- group
   data.id$w_case_model <- w_case_model
   data.id$w_case_ipcw <- w_case_ipcw
   data.id$w_control_model <- w_control_model
   data.id$w_control_ipcw <- w_control_ipcw
+  data.id$risk_t <- risk_t
   data.id$risk_tdt <- risk_tdt
+  data.id$risk_left <- risk_left
+  data.id$risk_right <- risk_right
+  data.id$osurv_left <- osurv_left
+  data.id$osurv_right <- osurv_right
+  
   data.id$tilddelta1 <- tilddelta1
   data.id$tilddelta2 <- tilddelta2
   data.id$osurv_t <- osurv_t
@@ -296,7 +367,7 @@ td_eval <- function(model, data,
   epce_df <- data.frame(id = 1:n,
                         epce = NA)
   epce_df$epce <- - (data.id$tilddelta1 * (risk_qp %*% w) + 
-      data.id$tilddelta2 * data.id$osurv_tdt / data.id$osurv_t)
+                       data.id$tilddelta2 * data.id$osurv_tdt / data.id$osurv_t)
   epce <- mean(epce_df$epce)
   
   return(list(data.id = data.id,
@@ -307,7 +378,8 @@ td_eval <- function(model, data,
               bs_model = bs_model,
               bs_ipcw = bs_ipcw,
               epce_df = epce_df,
-              epce = epce))
+              epce = epce,
+              approrightsubjects = longlivesub))
 }
 
 # rp <- icjm_auc(model = ICJM1, data = pass[pass$CISNET_ID<=100,], t = 1, dt = 3)

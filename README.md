@@ -24,6 +24,7 @@
 |:----------:|:--------------|
 |ICJM1.RData | the ICJM1 results|
 |CV | the folder containing model results of ICJM1 based on 5-fold cross-validation|
+|Simulation Datasets | Simulated datasets used in simulation including PASS and random schdules|
 
 ### Rscript
 
@@ -56,6 +57,7 @@
 |MM_fit.R | fit the longitudinal submodel used as an initial values in the joint model estimation|
 |Model Estimation.R | model fit based on 200 simulated training sets according to the model specification and scheduling scenarios|
 |Evaluation.R | evaluate the simulated models based on AUC, Brier score and EPCE|
+|Evaluation_naive.R | evaluate the simulated models based on AUC, Brier score and EPCE using the naive approach (ignoring censoring)|
 |Evaluation_true.R | evaluate the simulated models based on reference AUC, Brier score and EPCE in absence of censoring|
 
 
@@ -63,7 +65,8 @@
 
 |File name| Description|
 |:----------:|:--------------|
-|Paper plots.R | draw the plots|
+|Figure tables_main.R | draw the plots and tables in the manuscript|
+|Figure tables_supplement.R | draw the plots and tables in the supplement|
 
 
 ### Output
@@ -78,8 +81,24 @@
 |AccMet_CV_4.RData | the model evaluation results (AUC, Brier score and EPCE) of the fourth fold version of the ICJM1 |
 |AccMet_CV_5.RData | the model evaluation results (AUC, Brier score and EPCE) of the fifth fold version of the ICJM1 |
 
-* Tables&figures
+* Simulation Evaluation
 
+* Simulation Models
+
+|File name| Description|
+|:----------:|:--------------|
+|Correctly specified models | correctly-specified joint models |
+|Fitted mixed model| mixed model part for the initials for fitting the joint models |
+|Linear models | joint models assuming linear PSA|
+|Linear models | joint models omiting PSA density|
+
+* Simulation Storage
+|File name| Description|
+|:----------:|:--------------|
+|corspe | detailed predictions for correctly-specified joint model to visualized PSA trajectories|
+|linear | detailed predictions for joint model assuming linear PSA to visualized PSA trajectories|
+
+* Tables&figures
 
 |File name| Description|
 |:----------:|:--------------|

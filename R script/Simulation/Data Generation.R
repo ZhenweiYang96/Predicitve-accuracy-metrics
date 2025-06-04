@@ -9,11 +9,11 @@ for (i in 1:200) {
   train.data <- sim$dat[sim$dat$CISNET_ID %in% 1:300,]
   train.data.id <- sim$dat.id[sim$dat.id$CISNET_ID %in% 1:300,]
   save(train.data,
-       file = paste0("R script/Simulation/Datasets/traindata_",
+       file = paste0("Data/Simulation Datasets/traindata_",
                      i,
                      ".RData"))
   save(train.data.id,
-       file = paste0("R script/Simulation/Datasets/traindata_id_",
+       file = paste0("Data/Simulation Datasets/traindata_id_",
                      i,
                      ".RData"))
 }
@@ -24,8 +24,8 @@ set.seed(2025)
 seed <- sample(1:1e5, 200)
 
 for (i in 1:200) {
-  load(paste0("R script/Simulation/Datasets/traindata_id_", i, ".RData"))
-  load(paste0("R script/Simulation/Datasets/traindata_", i, ".RData"))
+  load(paste0("Data/Simulation Datasets/traindata_id_", i, ".RData"))
+  load(paste0("Data/Simulation Datasets/traindata_", i, ".RData"))
   # his schedules
   set.seed(seed[i])
   n <- nrow(train.data.id)
@@ -49,7 +49,7 @@ for (i in 1:200) {
   train.data.id$time.cmp2 <- cmp2
   train.data.id$status.cmp <- status
   save(train.data.id,
-       file = paste0("R script/Simulation/Datasets/random_3_40/traindata_id_",
+       file = paste0("Data/Simulation Datasets/random_3_40/traindata_id_",
                      i,
                      ".RData"))
   
@@ -72,8 +72,8 @@ set.seed(2025)
 seed <- sample(1:1e5, 200)
 
 for (i in 1:200) {
-  load(paste0("R script/Simulation/Datasets/traindata_id_", i, ".RData"))
-  load(paste0("R script/Simulation/Datasets/traindata_", i, ".RData"))
+  load(paste0("Data/Simulation Datasets/traindata_id_", i, ".RData"))
+  load(paste0("Data/Simulation Datasets/traindata_", i, ".RData"))
   # his schedules
   set.seed(seed[i])
   n <- nrow(train.data.id)
@@ -97,7 +97,7 @@ for (i in 1:200) {
   train.data.id$time.cmp2 <- cmp2
   train.data.id$status.cmp <- status
   save(train.data.id,
-       file = paste0("R script/Simulation/Datasets/random_3_10/traindata_id_",
+       file = paste0("Data/Simulation Datasets/random_3_10/traindata_id_",
                      i,
                      ".RData"))
   
@@ -110,7 +110,7 @@ for (i in 1:200) {
   train.data$time.cmp2 <- cmp2.long
   train.data$status.cmp <- status.long
   save(train.data,
-       file = paste0("R script/Simulation/Datasets/random_3_10/traindata_",
+       file = paste0("Data/Simulation Datasets/random_3_10/traindata_",
                      i,
                      ".RData"))
 }
@@ -121,8 +121,8 @@ set.seed(2025)
 seed <- sample(1:1e5, 200)
 
 for (i in 1:200) {
-  load(paste0("R script/Simulation/Datasets/traindata_id_", i, ".RData"))
-  load(paste0("R script/Simulation/Datasets/traindata_", i, ".RData"))
+  load(paste0("Data/Simulation Datasets/traindata_id_", i, ".RData"))
+  load(paste0("Data/Simulation Datasets/traindata_", i, ".RData"))
   # his schedules
   set.seed(seed[i])
   n <- nrow(train.data.id)
@@ -146,7 +146,7 @@ for (i in 1:200) {
   train.data.id$time.cmp2 <- cmp2
   train.data.id$status.cmp <- status
   save(train.data.id,
-       file = paste0("R script/Simulation/Datasets/random_10_20/traindata_id_",
+       file = paste0("Data/Simulation Datasets/random_10_20/traindata_id_",
                      i,
                      ".RData"))
   
@@ -159,7 +159,7 @@ for (i in 1:200) {
   train.data$time.cmp2 <- cmp2.long
   train.data$status.cmp <- status.long
   save(train.data,
-       file = paste0("R script/Simulation/Datasets/random_10_20/traindata_",
+       file = paste0("Data/Simulation Datasets/random_10_20/traindata_",
                      i,
                      ".RData"))
 }

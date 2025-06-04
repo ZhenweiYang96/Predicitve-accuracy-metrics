@@ -363,7 +363,7 @@ csdypred <- function(model = NULL,
   
   # end ---------------------------------------------------------------------
   
-  b <- output.mat
+  b <- output.mat[(nrow(output.mat)-iter+1):nrow(output.mat),]
   #
   # beta <- beta[(n.adapt+1):total,]
   # b <- b[(n.adapt+1):total,]

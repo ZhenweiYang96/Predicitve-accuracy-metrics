@@ -21,10 +21,10 @@ out <- lapply(1:200, function(datanum) {
   future({
     
     # load data file
-    load(paste0("R script/Simulation/Datasets/traindata_",
+    load(paste0("Data/Simulation Datasets/traindata_",
                 datanum, ".RData"))
     # load inits
-    load(paste0("R script/Simulation/Fitted mixed model/MM_inits_",
+    load(paste0("Output/Simulation Models/Fitted mixed model/MM_inits_",
                 datanum, ".RData"))
     
     # start modelling
@@ -33,7 +33,7 @@ out <- lapply(1:200, function(datanum) {
                      GLMM_fit = mm_inits,
                      seed = seed[datanum])
     save(icjm,
-         file = paste0("R script/Simulation/Models/Correctly specified models/Joint model_",
+         file = paste0("Output/Simulation Models/Correctly specified models/Joint model_",
                        datanum, ".RData"))
     # 
     plan(
@@ -66,10 +66,10 @@ out <- lapply(1:200, function(datanum) {
   future({
     
     # load data file
-    load(paste0("R script/Simulation/Datasets/traindata_",
+    load(paste0("Data/Simulation Datasets/traindata_",
                 datanum, ".RData"))
     # load inits
-    load(paste0("R script/Simulation/Fitted mixed model/MM_inits_",
+    load(paste0("Output/Simulation Models/Fitted mixed model/MM_inits_",
                 datanum, ".RData"))
     
     # start modelling
@@ -78,7 +78,7 @@ out <- lapply(1:200, function(datanum) {
                      GLMM_fit = mm_inits,
                      seed = seed[datanum])
     save(icjm,
-         file = paste0("R script/Simulation/Models/No covariate models/Joint model_",
+         file = paste0("Output/Simulation Models/No covariate models/Joint model_",
                        datanum, ".RData"))
     # 
     plan(
@@ -110,7 +110,7 @@ out <- lapply(1:100, function(datanum) {
   future({
     
     # load data file
-    load(paste0("R script/Simulation/Datasets/traindata_",
+    load(paste0("Data/Simulation Datasets/traindata_",
                 datanum, ".RData"))
     
     # start modelling
@@ -118,7 +118,7 @@ out <- lapply(1:100, function(datanum) {
                         n.burnin = 3000, n.iter = 10000, 
                         seed = seed[datanum])
     save(icjm,
-         file = paste0("R script/Simulation/Models/Linear models/Joint model_",
+         file = paste0("Output/Simulation Models/Linear models/Joint model_",
                        datanum, ".RData"))
     # 
     plan(
