@@ -23,7 +23,7 @@ icjm_cor <- function(df = 3, data, summary = T, n.adapt = 3000,
   if (!(kntbh_spec %in% c("quantile", "equal"))) {
     stop("Knots in the baseline hazard function should either be 'quantile' or 'equal'!")
   }
-  source("Function/function.R")
+  source("R script/Function/function.R")
   
   # Start with the mixed model ----------------------------------------------
   if (is.null(GLMM_fit)) {

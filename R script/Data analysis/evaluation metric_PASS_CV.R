@@ -80,6 +80,7 @@ save(test.pass, file="Data/CV/test_pass_5.RData")
 library(splines)
 library(GLMMadaptive)
 library(future)
+library(parallel)
 
 mm_fit <- function(df = 3, data) {
   
@@ -100,7 +101,8 @@ mm_fit <- function(df = 3, data) {
 
 
 # Fit the mixed models ----------------------------------------------------
-plan(multisession, workers = 15)
+ncore <- detectCores() - 1
+plan(multisession, workers = ncore)
 out <- lapply(c(1:5), function(datanum) {
   future({
     #Real simulation/True sens 75/
@@ -141,15 +143,16 @@ seed = 2008:2012
 
 # correctly-specified models -------------------------------------
 source("R script/Function/ICJM_correctlyspecify.R")
+ncore_div3 <- floor(ncore/3)
 plan(
   list(
-    tweak(multisession, workers = 5),
+    tweak(multisession, workers = ncore_div3),
     tweak(multisession, workers = 3)
   )
 )
 
 t1 <- Sys.time()
-out <- lapply(1:5, function(datanum) {
+out <- lapply(1:ncore_div3, function(datanum) {
   future({
     
     # load data file
@@ -170,7 +173,7 @@ out <- lapply(1:5, function(datanum) {
     # 
     plan(
       list(
-        tweak(multisession, workers = 5),
+        tweak(multisession, workers = ncore_div3),
         tweak(multisession, workers = 3)
       )
     )

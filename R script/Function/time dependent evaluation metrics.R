@@ -34,7 +34,7 @@ td_eval <- function(model, data,
   if (!(type %in% c('corspe', 'nocovar','linear'))) {
     stop("there are three models to be chosen from, you should specify 'corspe', 'nocovar', or 'linear'.")
   }
-  source(paste0("Function/dynpred_", type, ".R"))
+  source(paste0("R script/Function/dynpred_", type, ".R"))
   
   # variable names
   idVar <- model$model_info$var_names$id

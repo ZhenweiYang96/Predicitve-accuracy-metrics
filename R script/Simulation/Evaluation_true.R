@@ -168,7 +168,7 @@ for (i in 1:200) {
 }
 
 # No baseline covariate model
-for (i in 145:200) {
+for (i in 1:200) {
   load(paste0("Output/Simulation Models/No covariate models/Joint model_", i, ".RData"))
   if (i != 200) {
     load(paste0("Output/Simulation Datasets/traindata_", i+1, ".RData"))

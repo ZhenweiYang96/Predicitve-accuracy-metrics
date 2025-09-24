@@ -46,7 +46,7 @@
 |ICJM_linear.R | the function used to fit the ICJM1 with linear PSA|
 |ICJM_nocovar.R | the function used to fit the ICJM1 ignoring baseline covariate PSA density|
 |time dependent evaluation metrics.R | the function used for model evaluation based on AUC, Brier score and EPCE|
-|time dependent true EPCE | the function used to calculate the EPCE in absence of censoring|
+|time dependent true EPCE.R | the function used to calculate the EPCE in absence of censoring|
 
 * Simulation
 
@@ -93,6 +93,7 @@
 |Linear models | joint models omiting PSA density|
 
 * Simulation Storage
+
 |File name| Description|
 |:----------:|:--------------|
 |corspe | detailed predictions for correctly-specified joint model to visualized PSA trajectories|
@@ -104,6 +105,10 @@
 |:----------:|:--------------|
 |Main text | all figures used in the manuscripts|
 |Supplementary| all figures used in the supplementary materials|
+
+****
+
+## Reproducibility 
 
 ### Package dependencies
 
@@ -124,11 +129,44 @@
 - Matrix
 - latex2exp
 - cowplot
+- PCaASSim (this can be downloaded via: `devtools::install_github("https://github.com/ZhenweiYang96/PCaASSim")`)
 
 > [!Note]
 > - Please make sure to install above-mentioned packages by `install.packages()` before running the R code
 
-### Poster
+### Instructions for reproducing the results
+
+#### Section 3 - Application
+
+- The evaluation metrics for the Canary PASS data (with cross validation) can be derived from this path: */R script/Data analysis/evaluation metric_PASS_CV.R* (In the process, there will be some saved results, e.g., the model results for each fold stored under */Data/CV/ICJM_CV_1.RData* to */Data/CV/ICJM_CV_5.RData*).
+
+> [!Note]
+> - The original Canary PASS data (*/Data/pass_id.RData* and */Data/pass.RData*) is not publically sharable and thus does not present in this repository.
+
+#### Section 4 - Simulation
+
+1. Data generation: run */R script/Simulation/Data Generation.R* to generate $200 \times 4$ datasets. There are four types of scnearios: the standard PASS schedule (stored under */Data/Simulation Datasets/*), three random schedules (stored under */Data/Simulation Datasets/random_3_10/*, */Data/Simulation Datasets/random_3_40/* and */Data/Simulation Datasets/random_10_20/*)
+
+2. Preparation for model fitting: run */R script/Simulation/MM_fit.R*. 
+
+3. Model fitting for each simulated dataset: run */R script/Simulation/Model Estimation.R*. For each dataset, three models were fitted: correctly-specified model stored under */Output/Simulation Models/Correctly specified models/*, model with linear PSA stored under */Output/Simulation Models/Linear models/*, and the model ignoring the baseline covariate PSA density stored under */Output/Simulation Models/No covariate models/*.
+
+4. Model evaluating (two proposed approaches in the manuscript): run */R script/Simulation/Evaluation.R*. Results should be stored under */Output/Simulation Evaluation/*, and are needed for the plots.
+
+5. Model evaluating (the naive approach in the manuscript): run */R script/Simulation/Evaluation_naive.R*. Results should be stored under */Output/Simulation Evaluation/Observed/*, and are needed for the plots.
+
+6. Model evaluating (the reference in the manuscript): run */R script/Simulation/Evaluation_true.R*. Results should be stored under */Output/Simulation Evaluation/True linear/*, */Output/Simulation Evaluation/True models/* and */Output/Simulation Evaluation/True no cov/*, and are needed for the plots.
+
+#### Figures and Tables in the manuscript and supplements
+
+- run */R script/Tables & figures/Figure tables_main.R* for all the tables and figures in manuscript. This file uses the all the results from the previous steps which should be stored under */Output/*. The figures are stored under */Output/Tables & figures/Main text/*.
+
+- run */R script/Tables & figures/Figure tables_supplement.R* for all the tables and figures in supplements. This file uses the all the results from the previous steps which should be stored under */Output/*. The figures are stored under */Output/Tables & figures/Supplementary/*.
+
+
+****
+
+## Poster
 
 - The corresponding poster presented in ISCB 2024:
 

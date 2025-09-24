@@ -3,7 +3,7 @@ library(splines)
 library(mvtnorm)
 library(MASS)
 library(rjags)
-source("Function/function.R")
+source("R script/Function/function.R")
 
 # risk prediction function  -----------------------------------------------
 

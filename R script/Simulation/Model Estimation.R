@@ -4,14 +4,17 @@ library(splines)
 library(GLMMadaptive)
 library(rjags)
 library(mcmcse)
+library(parallel)
 load("R script/Simulation/Seed/DGM_seed.RData")
 
 
 # correctly-specified models -------------------------------------
 source("R script/Function/ICJM_correctlyspecify.R")
+ncore <- detectCores() - 1
+ncore_div3 <- floor(ncore/3)
 plan(
   list(
-    tweak(multisession, workers = 5),
+    tweak(multisession, workers = ncore_div3),
     tweak(multisession, workers = 3)
   )
 )
@@ -38,7 +41,7 @@ out <- lapply(1:200, function(datanum) {
     # 
     plan(
       list(
-        tweak(multisession, workers = 5),
+        tweak(multisession, workers = ncore_div3),
         tweak(multisession, workers = 3)
       )
     )
@@ -56,7 +59,7 @@ t2 - t1
 source("R script/Function/ICJM_nocovar.R")
 plan(
   list(
-    tweak(multisession, workers = 5),
+    tweak(multisession, workers = ncore_div3),
     tweak(multisession, workers = 3)
   )
 )
@@ -83,7 +86,7 @@ out <- lapply(1:200, function(datanum) {
     # 
     plan(
       list(
-        tweak(multisession, workers = 5),
+        tweak(multisession, workers = ncore_div3),
         tweak(multisession, workers = 3)
       )
     )
@@ -97,16 +100,16 @@ t2 - t1
 
 
 # linear models -------------------------------------
-source("Function/ICJM_linear.R")
+source("R script/Function/ICJM_linear.R")
 plan(
   list(
-    tweak(multisession, workers = 5),
+    tweak(multisession, workers = ncore_div3),
     tweak(multisession, workers = 3)
   )
 )
 
 t1 <- Sys.time()
-out <- lapply(1:100, function(datanum) {
+out <- lapply(1:200, function(datanum) {
   future({
     
     # load data file
@@ -123,7 +126,7 @@ out <- lapply(1:100, function(datanum) {
     # 
     plan(
       list(
-        tweak(multisession, workers = 5),
+        tweak(multisession, workers = ncore_div3),
         tweak(multisession, workers = 3)
       )
     )

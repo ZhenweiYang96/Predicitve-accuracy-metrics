@@ -2,6 +2,7 @@
 library(splines)
 library(GLMMadaptive)
 library(future)
+library(parallel)
 
 # Function ----------------------------------------------------------------
 mm_fit <- function(df = 3, data) {
@@ -23,7 +24,8 @@ mm_fit <- function(df = 3, data) {
 
 
 # Fit the mixed models ----------------------------------------------------
-plan(multisession, workers = 15)
+ncore <- detectCores() - 1
+plan(multisession, workers = ncore)
 out <- lapply(c(1:200), function(datanum) {
   future({
     #Real simulation/True sens 75/
@@ -39,7 +41,7 @@ out <- lapply(c(1:200), function(datanum) {
          file = paste0("Output/Simulation Models/Fitted mixed model/MM_",
                        datanum, ".RData"))
     #
-    plan(multisession, workers = 15)
+    plan(multisession, workers = ncore)
     
   })
 })
