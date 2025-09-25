@@ -138,16 +138,16 @@ for (i in 1:200) {
 ### True EPCE
 #################################################
 library(tidyverse)
-source("Function/time dependent true EPCE.R")
-load("Simulation/Seed/DGM_seed.RData")
+source("R script/Function/time dependent true EPCE.R")
+load("R script/Simulation/Seed/DGM_seed.RData")
 
 # Correct model
 for (i in 1:200) {
   load(paste0("Output/Simulation Models/Correctly specified models/Joint model_", i, ".RData"))
   if (i != 200) {
-    load(paste0("Output/Simulation Datasets/traindata_", i+1, ".RData"))
+    load(paste0("Data/Simulation Datasets/traindata_", i+1, ".RData"))
   } else {
-    load("Output/Simulation Datasets/traindata_1.RData")
+    load("Data/Simulation Datasets/traindata_1.RData")
   }
   true_res <- true_epce(model = icjm, data = train.data, type = "corspe", 
                    t = 1, dt = 3, seed = seed[i])
@@ -158,9 +158,9 @@ for (i in 1:200) {
 for (i in 1:200) {
   load(paste0("Output/Simulation Models/Linear models/Joint model_", i, ".RData"))
   if (i != 200) {
-    load(paste0("Output/Simulation Datasets/traindata_", i+1, ".RData"))
+    load(paste0("Data/Simulation Datasets/traindata_", i+1, ".RData"))
   } else {
-    load("Output/Simulation Datasets/traindata_1.RData")
+    load("Data/Simulation Datasets/traindata_1.RData")
   }
   true_res <- true_epce(model = icjm, data = train.data, type = "linear", 
                         t = 1, dt = 3, seed = seed[i])
@@ -171,9 +171,9 @@ for (i in 1:200) {
 for (i in 1:200) {
   load(paste0("Output/Simulation Models/No covariate models/Joint model_", i, ".RData"))
   if (i != 200) {
-    load(paste0("Output/Simulation Datasets/traindata_", i+1, ".RData"))
+    load(paste0("Data/Simulation Datasets/traindata_", i+1, ".RData"))
   } else {
-    load("Output/Simulation Datasets/traindata_1.RData")
+    load("Data/Simulation Datasets/traindata_1.RData")
   }
   true_res <- true_epce(model = icjm, data = train.data, type = "nocovar", 
                         t = 1, dt = 3, seed = seed[i])

@@ -62,7 +62,7 @@ for (i in 1:200) {
   train.data$time.cmp2 <- cmp2.long
   train.data$status.cmp <- status.long
   save(train.data,
-       file = paste0("Simulation/Datasets/random_3_40/traindata_",
+       file = paste0("Data/Simulation Datasets/random_3_40/traindata_",
                      i,
                      ".RData"))
 }
