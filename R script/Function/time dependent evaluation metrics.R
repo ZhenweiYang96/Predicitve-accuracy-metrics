@@ -30,7 +30,7 @@ td_eval <- function(model, data,
                     type = "corspe",
                     qp = 15,
                     t, dt, eidVar = "status.cmp", pred_niter=200,
-                    seed = 2024, c.step=50 ) { # , infty = 0, idVar = "CISNET_ID", timeVar = "TimeSince_Dx",e1tVar = "time.cmp1", e2tVar = "time.cmp2",
+                    seed = 2024, c.step=50, savepath=NULL) { # , infty = 0, idVar = "CISNET_ID", timeVar = "TimeSince_Dx",e1tVar = "time.cmp1", e2tVar = "time.cmp2",
   if (!(type %in% c('corspe', 'nocovar','linear'))) {
     stop("there are three models to be chosen from, you should specify 'corspe', 'nocovar', or 'linear'.")
   }
